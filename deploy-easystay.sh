@@ -110,9 +110,10 @@ done
 echo
 print_success "PostgreSQL pronto ✓"
 
-# Gerar APP_KEY
-print_status "Gerando APP_KEY do Laravel..."
+# Gerar APP_KEY e JWT_SECRET
+print_status "Gerando APP_KEY e JWT_SECRET do Laravel..."
 docker-compose -f docker-compose.easystay.yml exec backend php artisan key:generate --force || print_warning "Não foi possível gerar APP_KEY automaticamente"
+docker-compose -f docker-compose.easystay.yml exec backend php artisan jwt:secret --force || print_warning "Não foi possível gerar JWT_SECRET automaticamente"
 
 # Configurar CORS para permitir frontend
 print_status "Configurando CORS..."
@@ -140,7 +141,7 @@ docker-compose -f docker-compose.easystay.yml exec backend php artisan optimize
 
 # Verificar permissões de storage
 print_status "Corrigindo permissões de storage..."
-docker-compose -f docker-compose.easystay.yml exec backend chown -R www:www /var/www/storage /var/www/bootstrap/cache
+docker-compose -f docker-compose.easystay.yml exec backend chown -R app:www-data /var/www/storage /var/www/bootstrap/cache
 docker-compose -f docker-compose.easystay.yml exec backend chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 # Verificar status final
