@@ -54,74 +54,25 @@ print_success "Docker verificado ✓"
 print_status "Fazendo login no GitHub Container Registry..."
 echo "Certifique-se de ter feito login: docker login ghcr.io -u perezvitor"
 
-# Configurar .env do backend
-print_status "Configurando backend..."
+# Verificar se .env existe (para variáveis do docker-compose)
+if [ ! -f ".env" ]; then
+    print_warning "Criando arquivo .env para docker-compose..."
+    cat > .env << EOF
+# Supabase
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_KEY=
+SUPABASE_BUCKET=
 
-if [ ! -f "easy-stay-backend/.env" ]; then
-    if [ -f "easy-stay-backend/.env.example" ]; then
-        cp easy-stay-backend/.env.example easy-stay-backend/.env
-        print_success "Arquivo .env criado a partir do .env.example"
-    else
-        print_warning "Criando .env básico..."
-        cat > easy-stay-backend/.env << EOF
-APP_NAME="EasyStay"
-APP_ENV=production
-APP_KEY=
-APP_DEBUG=false
-APP_URL=http://138.201.244.103:8090
-APP_TIMEZONE=America/Sao_Paulo
-FRONTEND_URL=http://138.201.244.103:3005
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
 
-# Disable Telescope in production
-TELESCOPE_ENABLED=false
-
-DB_CONNECTION=pgsql
-DB_HOST=postgres
-DB_PORT=5432
-DB_DATABASE=easystay
-DB_USERNAME=easystay_user
-DB_PASSWORD=EasyStay2024!Strong
-
-REDIS_HOST=redis
-REDIS_PORT=6379
-CACHE_DRIVER=redis
-SESSION_DRIVER=redis
-QUEUE_CONNECTION=redis
-
-JWT_TTL=60
-AUTH_MAX_INACTIVE_TIME=1440
-AUTH_TOKEN_REFRESH_PERCENTAGE=80
-AUTH_TOKEN_REFRESH_COOLDOWN=15
-
-LOG_CHANNEL=stack
-LOG_LEVEL=error
+# Resend Email
+RESEND_API_KEY=
 EOF
-    fi
-fi
-
-# Adicionar variáveis se não existirem
-print_status "Configurando variáveis adicionais..."
-if ! grep -q "CLOUDINARY_CLOUD_NAME=" easy-stay-backend/.env; then
-    echo "" >> easy-stay-backend/.env
-    echo "# Cloudinary" >> easy-stay-backend/.env
-    echo "CLOUDINARY_CLOUD_NAME=" >> easy-stay-backend/.env
-    echo "CLOUDINARY_API_KEY=" >> easy-stay-backend/.env
-    echo "CLOUDINARY_API_SECRET=" >> easy-stay-backend/.env
-fi
-
-if ! grep -q "SUPABASE_URL=" easy-stay-backend/.env; then
-    echo "" >> easy-stay-backend/.env
-    echo "# Supabase" >> easy-stay-backend/.env
-    echo "SUPABASE_URL=" >> easy-stay-backend/.env
-    echo "SUPABASE_SERVICE_ROLE_KEY=" >> easy-stay-backend/.env
-    echo "SUPABASE_KEY=" >> easy-stay-backend/.env
-    echo "SUPABASE_BUCKET=" >> easy-stay-backend/.env
-fi
-
-if ! grep -q "RESEND_API_KEY=" easy-stay-backend/.env; then
-    echo "" >> easy-stay-backend/.env
-    echo "# Resend Email" >> easy-stay-backend/.env
-    echo "RESEND_API_KEY=" >> easy-stay-backend/.env
+    print_warning "Configure as variáveis no arquivo .env antes de continuar!"
 fi
 
 # Parar containers existentes
@@ -159,14 +110,9 @@ done
 echo
 print_success "PostgreSQL pronto ✓"
 
-# Gerar APP_KEY se necessário
-if ! grep -q "APP_KEY=base64:" easy-stay-backend/.env; then
-    print_status "Gerando APP_KEY do Laravel..."
-    docker cp easy-stay-backend/.env easystay-backend:/var/www/.env
-    docker-compose -f docker-compose.easystay.yml exec backend php artisan key:generate --force
-    docker cp easystay-backend:/var/www/.env easy-stay-backend/.env
-    print_success "APP_KEY gerada ✓"
-fi
+# Gerar APP_KEY
+print_status "Gerando APP_KEY do Laravel..."
+docker-compose -f docker-compose.easystay.yml exec backend php artisan key:generate --force || print_warning "Não foi possível gerar APP_KEY automaticamente"
 
 # Configurar CORS para permitir frontend
 print_status "Configurando CORS..."

@@ -40,7 +40,6 @@ services:
     volumes:
       - backend_storage:/var/www/storage
       - backend_cache:/var/www/bootstrap/cache
-      - ./easy-stay-backend/.env:/var/www/.env:ro
     depends_on:
       postgres:
         condition: service_healthy
