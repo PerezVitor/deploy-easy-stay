@@ -61,7 +61,7 @@ services:
     image: ghcr.io/perezvitor/easystay-frontend:latest
     container_name: easystay-frontend
     ports:
-      - "3001:3000"
+      - "3005:3000"
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=https://api-easystay.vitorperez.dev.br/api/v1
@@ -81,7 +81,7 @@ services:
     image: postgres:17-alpine
     container_name: easystay-postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       - POSTGRES_DB=easystay
       - POSTGRES_USER=easystay_user
@@ -113,7 +113,7 @@ services:
     image: redis:7-alpine
     container_name: easystay-redis
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     networks:
