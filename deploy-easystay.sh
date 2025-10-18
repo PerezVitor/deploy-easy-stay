@@ -141,7 +141,7 @@ docker-compose -f docker-compose.easystay.yml exec backend php artisan optimize
 
 # Verificar permissões de storage
 print_status "Corrigindo permissões de storage..."
-docker-compose -f docker-compose.easystay.yml exec backend chown -R app:www-data /var/www/storage /var/www/bootstrap/cache
+docker-compose -f docker-compose.easystay.yml exec backend chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 docker-compose -f docker-compose.easystay.yml exec backend chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 # Verificar status final
