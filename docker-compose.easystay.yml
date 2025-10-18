@@ -1,0 +1,149 @@
+version: '3.8'
+
+services:
+  # Backend Laravel Application
+  backend:
+    image: ghcr.io/perezvitor/easystay-backend:latest
+    container_name: easystay-backend
+    ports:
+      - "8090:80"
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=https://api-easystay.vitorperez.dev.br
+      - FRONTEND_URL=https://easystay.vitorperez.dev.br
+      - APP_TIMEZONE=America/Sao_Paulo
+      - TELESCOPE_ENABLED=false
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=easystay
+      - DB_USERNAME=easystay_user
+      - DB_PASSWORD=EasyStay2024!Strong
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+      - JWT_TTL=60
+      - AUTH_MAX_INACTIVE_TIME=1440
+      - AUTH_TOKEN_REFRESH_PERCENTAGE=80
+      - AUTH_TOKEN_REFRESH_COOLDOWN=15
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - SUPABASE_BUCKET=${SUPABASE_BUCKET}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+    volumes:
+      - backend_storage:/var/www/storage
+      - backend_cache:/var/www/bootstrap/cache
+      - ./easy-stay-backend/.env:/var/www/.env:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - easystay-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Frontend Next.js Application
+  frontend:
+    image: ghcr.io/perezvitor/easystay-frontend:latest
+    container_name: easystay-frontend
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://api-easystay.vitorperez.dev.br/api/v1
+      - PORT=3000
+    networks:
+      - easystay-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:17-alpine
+    container_name: easystay-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=easystay
+      - POSTGRES_USER=easystay_user
+      - POSTGRES_PASSWORD=EasyStay2024!Strong
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=pt_BR.UTF-8 --lc-ctype=pt_BR.UTF-8
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - easystay-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U easystay_user -d easystay"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command: >
+      postgres
+      -c max_connections=100
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: easystay-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - easystay-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --tcp-keepalive 60
+      --save 900 1 300 10 60 10000
+
+networks:
+  easystay-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_storage:
+    driver: local
+  backend_cache:
+    driver: local
+
