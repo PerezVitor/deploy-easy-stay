@@ -40,6 +40,7 @@ services:
     volumes:
       - backend_storage:/var/www/storage
       - backend_cache:/var/www/bootstrap/cache
+      - /var/log/supervisor:/var/log/supervisor
     depends_on:
       postgres:
         condition: service_healthy
