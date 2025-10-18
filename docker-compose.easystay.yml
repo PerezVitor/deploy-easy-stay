@@ -10,8 +10,7 @@ services:
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
-      - APP_URL=https://api-easystay.vitorperez.dev.br
-      - FRONTEND_URL=https://easystay.vitorperez.dev.br
+      - FRONTEND_URL=http://138.201.244.103:3005
       - APP_TIMEZONE=America/Sao_Paulo
       - TELESCOPE_ENABLED=false
       - DB_CONNECTION=pgsql
