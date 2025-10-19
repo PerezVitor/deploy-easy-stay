@@ -15,4 +15,5 @@ execute o docker na maquina
 docker build -t ghcr.io/perezvitor/easystay-frontend:latest .
 docker push ghcr.io/perezvitor/easystay-frontend:latest
 
+chmod +x deploy-easystay.sh
 
