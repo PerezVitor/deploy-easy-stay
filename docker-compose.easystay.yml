@@ -111,8 +111,6 @@ services:
   redis:
     image: redis:7-alpine
     container_name: easystay-redis
-    ports:
-      - "6380:6379"
     volumes:
       - redis_data:/data
     networks:
